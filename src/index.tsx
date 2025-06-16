@@ -1,7 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import Roteador from './componentes/roteador';
-import reportWebVitals from './reportWebVitals';
 import 'materialize-css/dist/css/materialize.min.css';
 
 ReactDOM.render(
@@ -10,5 +9,3 @@ ReactDOM.render(
   </React.StrictMode>,
   document.getElementById('root')
 );
-
-reportWebVitals();

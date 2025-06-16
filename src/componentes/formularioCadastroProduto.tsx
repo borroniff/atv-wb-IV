@@ -1,91 +1,102 @@
-import { Component } from "react";
+import { useState, useEffect } from 'react';
 import M from 'materialize-css';
-
-type Produto = {
-    id: number;
-    nome: string;
-    preco: number;
-    descricao: string;
-};
+import 'materialize-css/dist/css/materialize.min.css';
+import { Produto } from '../types';
 
 type Props = {
     tema: string;
-    produto?: Produto | null;  // Aceita undefined OU null
+    produto?: Produto | null;
     onSubmit: (produto: Produto) => void;
     onCancel: () => void;
 };
 
-type State = {
-    nome: string;
-    preco: string;
-    descricao: string;
-};
+const FormularioCadastroProduto = ({ tema, produto, onSubmit, onCancel }: Props) => {
+    const [nome, setNome] = useState(produto?.nome || '');
+    const [preco, setPreco] = useState(produto?.preco.toString() || '');
+    const [descricao, setDescricao] = useState(produto?.descricao || '');
 
-export default class FormularioCadastroProduto extends Component<Props, State> {
-    constructor(props: Props) {
-        super(props);
-        this.state = {
-            nome: props.produto?.nome || '',
-            preco: props.produto?.preco.toString() || '',
-            descricao: props.produto?.descricao || ''
-        };
-    }
-
-    componentDidMount() {
+    useEffect(() => {
         M.updateTextFields();
-    }
+    }, []);
 
-    handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        const { name, value } = e.target;
-        this.setState({ [name]: value } as Pick<State, keyof State>);
-    };
-
-    handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        this.props.onSubmit({
-            id: this.props.produto?.id || 0,
-            nome: this.state.nome,
-            preco: parseFloat(this.state.preco),
-            descricao: this.state.descricao
+        onSubmit({
+            id: produto?.id || 0,
+            nome,
+            preco: parseFloat(preco),
+            descricao
         });
     };
 
-    render() {
-        const { tema, onCancel } = this.props;
-        const { nome, preco, descricao } = this.state;
+    return (
+        <div className="container">
+            <form onSubmit={handleSubmit} className="col s12">
+                <h5 className="center-align">
+                    {produto ? 'Editar Produto' : 'Cadastrar Produto'}
+                </h5>
 
-        return (
-            <div className="container">
-                <form onSubmit={this.handleSubmit}>
-                    <h5>{this.props.produto ? 'Editar Produto' : 'Novo Produto'}</h5>
-                    
-                    <div className="input-field">
-                        <input id="nome" type="text" name="nome" value={nome} onChange={this.handleChange} required />
-                        <label htmlFor="nome">Nome</label>
+                <div className="row">
+                    <div className="input-field col s12">
+                        <input
+                            id="nome"
+                            type="text"
+                            value={nome}
+                            onChange={(e) => setNome(e.target.value)}
+                            className="validate"
+                            required
+                        />
+                        <label htmlFor="nome">Nome do Produto</label>
                     </div>
+                </div>
 
-                    <div className="input-field">
-                        <input id="preco" type="number" name="preco" value={preco} 
-                               onChange={this.handleChange} step="0.01" min="0" required />
+                <div className="row">
+                    <div className="input-field col s6">
+                        <input
+                            id="preco"
+                            type="number"
+                            value={preco}
+                            onChange={(e) => setPreco(e.target.value)}
+                            className="validate"
+                            required
+                            min="0.01"
+                            step="0.01"
+                        />
                         <label htmlFor="preco">Preço (R$)</label>
                     </div>
+                </div>
 
-                    <div className="input-field">
-                        <textarea id="descricao" name="descricao" value={descricao} 
-                                  onChange={this.handleChange} className="materialize-textarea" />
+                <div className="row">
+                    <div className="input-field col s12">
+                        <textarea
+                            id="descricao"
+                            value={descricao}
+                            onChange={(e) => setDescricao(e.target.value)}
+                            className="materialize-textarea"
+                        />
                         <label htmlFor="descricao">Descrição</label>
                     </div>
+                </div>
 
-                    <div className="center-align">
-                        <button type="button" onClick={onCancel} className="btn grey">
-                            Cancelar
-                        </button>
-                        <button type="submit" className={`btn ${tema}`} style={{marginLeft: '10px'}}>
-                            Salvar
-                        </button>
-                    </div>
-                </form>
-            </div>
-        );
-    }
-}
+                <div className="row center-align">
+                    <button
+                        type="button"
+                        onClick={onCancel}
+                        className="btn grey"
+                    >
+                        Cancelar
+                    </button>
+                    <button
+                        type="submit"
+                        className={`btn ${tema}`}
+                        style={{ marginLeft: '10px' }}
+                    >
+                        {produto ? 'Atualizar' : 'Cadastrar'}
+                    </button>
+                </div>
+            </form>
+        </div>
+    );
+};
+
+export default FormularioCadastroProduto;

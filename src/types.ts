@@ -1,22 +1,23 @@
-// src/types.ts
-export interface IProduto {
+export interface Cliente {
+    id: number;
+    nome: string;
+    sobrenome: string;
+    cpf: string;
+    telefone: string;
+    email: string;
+    endereco: string;
+}
+
+export interface Produto {
     id: number;
     nome: string;
     preco: number;
     descricao: string;
 }
 
-export interface IListaProdutosProps {
-    tema: string;
-    produtos: IProduto[];
-    onEdit: (id: number) => void;
-    onDelete: (id: number) => void;
-    onAddNew: () => void;
-}
-
-export type Servico = {
+export interface Servico {
     id: number;
     nome: string;
     preco: number;
     duracao: string;
-};
+}

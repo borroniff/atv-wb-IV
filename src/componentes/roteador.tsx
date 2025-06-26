@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import BarraNavegacao from './barraNavegacao';
 import ListaCliente from './listaCliente';
 import FormularioCadastroCliente from './formularioCadastroCliente';
@@ -7,55 +7,69 @@ import FormularioCadastroProduto from './formularioCadastroProduto';
 import ListaServicos from './listaServicos';
 import FormularioCadastroServico from './formularioCadastroServico';
 import { Cliente, Produto, Servico } from '../types';
+import { ClienteService } from '../services/clienteService';
 
 const Roteador = () => {
-    // Estados
     const [tela, setTela] = useState<string>("Clientes");
-    const [clientes, setClientes] = useState<Cliente[]>([
-        {
-            id: 1,
-            nome: 'João',
-            sobrenome: 'Silva',
-            cpf: '123.456.789-00',
-            telefone: '(11) 9999-9999',
-            email: 'joao@email.com',
-            endereco: 'Rua A, 123'
-        }
-    ]);
-    const [produtos, setProdutos] = useState<Produto[]>([
-        { id: 1, nome: 'Shampoo', preco: 25.9, descricao: 'Shampoo hidratante' }
-    ]);
-    const [servicos, setServicos] = useState<Servico[]>([
-        { id: 1, nome: 'Corte de Cabelo', preco: 60, duracao: '30 min' }
-    ]);
+    const [clientes, setClientes] = useState<Cliente[]>([]);
+    const [produtos, setProdutos] = useState<Produto[]>([]);
+    const [servicos, setServicos] = useState<Servico[]>([]);
     const [clienteEditando, setClienteEditando] = useState<Cliente | null>(null);
     const [produtoEditando, setProdutoEditando] = useState<Produto | null>(null);
     const [servicoEditando, setServicoEditando] = useState<Servico | null>(null);
+    const [carregando, setCarregando] = useState(true);
 
-    // Navegação
+    useEffect(() => {
+        const carregarDados = async () => {
+            try {
+                const dadosClientes = await ClienteService.listarClientes();
+                setClientes(dadosClientes);
+                setCarregando(false);
+            } catch (erro) {
+                console.error('Erro ao carregar clientes:', erro);
+                setCarregando(false);
+            }
+        };
+        carregarDados();
+    }, []);
+
     const selecionarView = (novaTela: string, e: React.MouseEvent) => {
         e.preventDefault();
         setTela(novaTela);
     };
 
-    // CRUD Clientes
-    const adicionarCliente = (cliente: Cliente) => {
-        if (cliente.id === 0) {
-            const novoId = clientes.length > 0 ? Math.max(...clientes.map(c => c.id)) + 1 : 1;
-            setClientes([...clientes, { ...cliente, id: novoId }]);
-        } else {
-            setClientes(clientes.map(c => c.id === cliente.id ? cliente : c));
+    // CRUD Clientes (integrado com backend)
+    const adicionarCliente = async (cliente: Cliente) => {
+        try {
+            if (cliente.id === 0) {
+                const novoId = await ClienteService.cadastrarCliente(cliente);
+                const clienteAtualizado = await ClienteService.obterCliente(novoId);
+                setClientes([...clientes, clienteAtualizado]);
+            } else {
+                await ClienteService.atualizarCliente(cliente);
+                const clienteAtualizado = await ClienteService.obterCliente(cliente.id);
+                setClientes(clientes.map(c => c.id === cliente.id ? clienteAtualizado : c));
+            }
+            setTela('Clientes');
+        } catch (erro) {
+            console.error('Erro ao salvar cliente:', erro);
+            alert('Erro ao salvar cliente: ' + (erro instanceof Error ? erro.message : 'Erro desconhecido'));
         }
-        setTela('Clientes');
     };
 
-    const excluirCliente = (id: number) => {
+    const excluirCliente = async (id: number) => {
         if (window.confirm('Tem certeza que deseja excluir este cliente?')) {
-            setClientes(clientes.filter(c => c.id !== id));
+            try {
+                await ClienteService.excluirCliente(id);
+                setClientes(clientes.filter(c => c.id !== id));
+            } catch (erro) {
+                console.error('Erro ao excluir cliente:', erro);
+                alert('Erro ao excluir cliente: ' + (erro instanceof Error ? erro.message : 'Erro desconhecido'));
+            }
         }
     };
 
-    // CRUD Produtos
+    // CRUD Produtos (mantido local - não integrado com backend)
     const adicionarProduto = (produto: Produto) => {
         if (produto.id === 0) {
             const novoId = produtos.length > 0 ? Math.max(...produtos.map(p => p.id)) + 1 : 1;
@@ -72,7 +86,7 @@ const Roteador = () => {
         }
     };
 
-    // CRUD Serviços
+    // CRUD Serviços (mantido local - não integrado com backend)
     const adicionarServico = (servico: Servico) => {
         if (servico.id === 0) {
             const novoId = servicos.length > 0 ? Math.max(...servicos.map(s => s.id)) + 1 : 1;
@@ -89,10 +103,8 @@ const Roteador = () => {
         }
     };
 
-    // Renderização condicional
     return (
         <>
-            {/* Tela de Clientes */}
             {tela === 'Clientes' && (
                 <>
                     <BarraNavegacao
@@ -100,19 +112,40 @@ const Roteador = () => {
                         botoes={['Clientes', 'Cadastros', 'Produtos', 'Serviços']}
                         seletorView={selecionarView}
                     />
-                    <ListaCliente
-                        tema="purple lighten-4"
-                        clientes={clientes}
-                        onEdit={(id) => {
-                            setClienteEditando(clientes.find(c => c.id === id) || null);
-                            setTela('Cadastros');
-                        }}
-                        onDelete={excluirCliente}
-                    />
+                    {carregando ? (
+                        <div className="center-align" style={{ marginTop: '50px' }}>
+                            <div className="preloader-wrapper big active">
+                                <div className="spinner-layer spinner-blue-only">
+                                    <div className="circle-clipper left">
+                                        <div className="circle"></div>
+                                    </div>
+                                    <div className="gap-patch">
+                                        <div className="circle"></div>
+                                    </div>
+                                    <div className="circle-clipper right">
+                                        <div className="circle"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <p>Carregando clientes...</p>
+                        </div>
+                    ) : (
+                        <ListaCliente
+                            tema="purple lighten-4"
+                            clientes={clientes}
+                            onEdit={(id) => {
+                                const cliente = clientes.find(c => c.id === id);
+                                if (cliente) {
+                                    setClienteEditando(cliente);
+                                    setTela('Cadastros');
+                                }
+                            }}
+                            onDelete={excluirCliente}
+                        />
+                    )}
                 </>
             )}
 
-            {/* Tela de Cadastro/Edição de Clientes */}
             {tela === 'Cadastros' && (
                 <>
                     <BarraNavegacao
@@ -124,12 +157,14 @@ const Roteador = () => {
                         tema="purple lighten-4"
                         cliente={clienteEditando}
                         onSubmit={adicionarCliente}
-                        onCancel={() => setTela('Clientes')}
+                        onCancel={() => {
+                            setClienteEditando(null);
+                            setTela('Clientes');
+                        }}
                     />
                 </>
             )}
 
-            {/* Tela de Produtos */}
             {tela === 'Produtos' && (
                 <>
                     <BarraNavegacao
@@ -153,7 +188,6 @@ const Roteador = () => {
                 </>
             )}
 
-            {/* Tela de Cadastro/Edição de Produtos */}
             {tela === 'CadastrosProdutos' && (
                 <>
                     <BarraNavegacao
@@ -170,7 +204,6 @@ const Roteador = () => {
                 </>
             )}
 
-            {/* Tela de Serviços */}
             {tela === 'Serviços' && (
                 <>
                     <BarraNavegacao
@@ -194,7 +227,6 @@ const Roteador = () => {
                 </>
             )}
 
-            {/* Tela de Cadastro/Edição de Serviços */}
             {tela === 'CadastrosServicos' && (
                 <>
                     <BarraNavegacao

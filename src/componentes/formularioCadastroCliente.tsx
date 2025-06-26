@@ -14,10 +14,10 @@ const FormularioCadastroCliente = ({ tema, cliente, onSubmit, onCancel }: Props)
     const [formData, setFormData] = useState<Omit<Cliente, 'id'>>({
         nome: '',
         sobrenome: '',
-        cpf: '',
         telefone: '',
         email: '',
-        endereco: ''
+        endereco: '',
+        cpf: ''
     });
 
     useEffect(() => {
@@ -25,10 +25,10 @@ const FormularioCadastroCliente = ({ tema, cliente, onSubmit, onCancel }: Props)
             setFormData({
                 nome: cliente.nome,
                 sobrenome: cliente.sobrenome,
-                cpf: cliente.cpf,
                 telefone: cliente.telefone,
                 email: cliente.email,
-                endereco: cliente.endereco
+                endereco: cliente.endereco,
+                cpf: cliente.cpf || ''
             });
         }
         M.updateTextFields();
@@ -84,18 +84,6 @@ const FormularioCadastroCliente = ({ tema, cliente, onSubmit, onCancel }: Props)
                 <div className="row">
                     <div className="input-field col s6">
                         <input
-                            id="cpf"
-                            name="cpf"
-                            type="text"
-                            value={formData.cpf}
-                            onChange={handleChange}
-                            className="validate"
-                            required
-                        />
-                        <label htmlFor="cpf">CPF</label>
-                    </div>
-                    <div className="input-field col s6">
-                        <input
                             id="telefone"
                             name="telefone"
                             type="tel"
@@ -103,12 +91,10 @@ const FormularioCadastroCliente = ({ tema, cliente, onSubmit, onCancel }: Props)
                             onChange={handleChange}
                             className="validate"
                             required
+                            placeholder="(99) 99999-9999"
                         />
                         <label htmlFor="telefone">Telefone</label>
                     </div>
-                </div>
-
-                <div className="row">
                     <div className="input-field col s6">
                         <input
                             id="email"
@@ -121,7 +107,10 @@ const FormularioCadastroCliente = ({ tema, cliente, onSubmit, onCancel }: Props)
                         />
                         <label htmlFor="email">E-mail</label>
                     </div>
-                    <div className="input-field col s6">
+                </div>
+
+                <div className="row">
+                    <div className="input-field col s12">
                         <input
                             id="endereco"
                             name="endereco"
@@ -130,6 +119,7 @@ const FormularioCadastroCliente = ({ tema, cliente, onSubmit, onCancel }: Props)
                             onChange={handleChange}
                             className="validate"
                             required
+                            placeholder="Rua, Número - Bairro"
                         />
                         <label htmlFor="endereco">Endereço</label>
                     </div>

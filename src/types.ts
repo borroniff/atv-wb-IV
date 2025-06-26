@@ -2,10 +2,10 @@ export interface Cliente {
     id: number;
     nome: string;
     sobrenome: string;
-    cpf: string;
     telefone: string;
     email: string;
     endereco: string;
+    cpf?: string; // Campo opcional (não existe no backend)
 }
 
 export interface Produto {
